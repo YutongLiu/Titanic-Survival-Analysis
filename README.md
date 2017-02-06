@@ -1,6 +1,6 @@
 # Titanic-Survival-Analysis
 ------------------------------------------------------
-This was the first time I did a data analysis project by myself after training, actually I finished it a month ago :) and now I want to record it on Github. Any comment is welcome!
+This is the first time I do a data analysis project by myself after training, actually I finished it a month ago :) and now I want to record it on Github. Any comment is welcome!
 
 Here is the [link]('https://www.kaggle.com/c/titanic') of this competition on kaggle.
 Brief of this competition.
