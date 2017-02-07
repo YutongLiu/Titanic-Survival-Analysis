@@ -1,0 +1,12 @@
+There are some key findings and learing I learnt during project, I need to note them down here otherwise I'll forget them :)
+***
+## About Using R markdown  
+### 1 How to hide warning messages(e.g. those when loading packages)?
+Set display option, set "message = FALSE"(default is TRUE), __NOT__ "warning = FALSE"!!!
+   
+### 2 How to use inline code?
+It's **`** **NOT** **'** !!!  
+     For example `r 4+2`, NOT 'r 4+2'
+   
+### 3 About creating a table in a report
+The length of **-** should not be less than the longest text! Otherwise the display isn't good.
