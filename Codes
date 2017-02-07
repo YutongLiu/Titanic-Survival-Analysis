@@ -1,8 +1,10 @@
 ---
 title: "Titanic_survival_analysis_report"
 author: "YutongLIU"
-date: "2016Äê12ÔÂ19ÈÕ"
-output: pdf_document
+date: "2016å¹´12æœˆ19æ—¥"
+output:
+  html_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -13,29 +15,32 @@ This is the first time I tried to do a data analysis practice by myself after da
 
 Here is the agenda of this report
 
-> 1 Introduction
-> 2 Defining the Question
+#### 1 Introduction  
+#### 2 Defining the Question
   + 2.1 What is the outcome we want?
-  + 2.2 What data can we use to answer the question?
-> 3 Feature Engineering
+  + 2.2 What data can we use to answer the question?  
+
+#### 3 Feature Engineering  
   + 3.1 Missing data imputation
   + 3.2 Which varialbes may be relevant to the outcome?
     * 3.2.1 Higher Passenger class, more possible to survive?
     * 3.2.2 Children and women first?
     * 3.2.3 Families can help each other?
     * 3.2.4 Is cabin location relevant to the passenger survival?
-> 4 Prediction
-> 5 Conclusion
-----------------------------------------------------------------
+    * 3.2.5 Is there any more information we can grab from passengers name?
 
-> 1 Introduction
+#### 4 Prediction  
+#### 5 Conclusions
+
+
+> #### 1 Introduction
 
 With this dataset, let's find out if it's possible to predict Titanic passengers' survival based on their profile.
 
-Firstly I downloaded the dataset here [link](https://www.kaggle.com/c/titanic)
+Firstly I downloaded the dataset here [kaggle](https://www.kaggle.com/c/titanic)
 
-### Set working directory
-```{r preparation,results = 'hide'}
+##### Set working directory
+```{r preparation,results = 'hide',warning=FALSE,message=FALSE}
 # Set working directory
 if(!dir.exists("D:/kaggle/kaggle_Titanic"))
         dir.create("D:/kaggle/kaggle_Titanic")
@@ -49,7 +54,7 @@ library(caret)   # prediction
 library(randomForest) #prediction
 ```
 
-### Loading training dataset
+##### Loading training dataset
 
 Here are the reasons why I save integer variables in different formats
   + **Survived**: I think it's nomial variable, so I save it as factor.
@@ -80,10 +85,10 @@ Now let's have a glance at the dataset
 str(train_raw)
 ```
 
-There are 11 variables(**PassengerID**¡¡excluded), here is the definition of each variables.
+There are 11 variables(**PassengerID**ã€€excluded), here is the definition of each variables.
 
 Variable|Description
---------|-----------
+--------|-------------------------------------------------------------------
 survival|Survival(0 = No; 1 = Yes)
 pclass  |Passenger Class(1 = 1st; 2 = 2nd; 3 = 3rd)
 name    |Passenger name
@@ -96,15 +101,18 @@ fare    |Passenger fare
 cabin   |Cabin
 embarked|Port of Embarkation(C = Cherbourg; Q = Queenstown; S = Southampton)
 
-> 2 Defining the Question
+> #### 2 Defining the Question
+
    + 2.1 What is the outcome we want?
 Clearly it is important to set the target of data analysis before anything gets start.
-We want to predict the survival of Titanic passengers. In the dataset, **pclass** is the outcome we will predict in testset.
+We want to predict the survival of Titanic passengers. In the dataset, **pclass** is the outcome we will predict in testset.  
+
    + 2.2 What data can we use to answer the question?
 There are 10 variables, two of them, **age** and **sex**, are demographic information, there is also passengers' name. I think another 7 varibales can be categorized to information about their trip: **embarked**, where did they get on the boat; **sibsp** and **parch**, were they alone or accompanied; **pclass**, which class are they, etc.
 
 
-> 3 Feature Engineering
+> #### 3 Feature Engineering
+
   + 3.1 Dataset cleaning and Missing data imputation
 
 ### 3.1.1 Dataset cleaning
@@ -120,8 +128,9 @@ total_clean <- total_raw
 #### Text Editing  
 Firstly, let's check the variable names, are they easy to use? Fortunately there is no space among the variable names. Now I just standardize them in lower case.
 ```{r text_edit,results = 'hide'}
-# Standardize all variable names in lower case
+# Standardize all variable names in lower case and check
 names(total_clean) <- tolower(names(total_raw))
+colnames(total_clean)
 ```
 
 ### 3.1.2 Missing value inputation
@@ -133,18 +142,18 @@ na_count<-summary(apply(total_clean,2,is.na))
 From the table below, we learned that there are NA values in several variables
 Because the dataset contains the test set, there should be missing values in **survived** so it won't be shown in the table, and **passengerid** won't be used as predictor, therefore it won't be shown in the table neither.
 
-Variables                         |NA values #
-----------------------------------|-----------
-'r dimnames(na\_count)[[2]][[3]]' |'r na_count[3,3]'
-'r dimnames(na\_count)[[2]][[4]]' |'r na_count[3,4]'
-'r dimnames(na\_count)[[2]][[5]]' |'r na_count[3,5]'
-'r dimnames(na\_count)[[2]][[6]]' |'r na_count[3,6]'
-'r dimnames(na\_count)[[2]][[7]]' |'r na_count[3,7]'
-'r dimnames(na\_count)[[2]][[8]]' |'r na_count[3,8]'
-'r dimnames(na\_count)[[2]][[9]]' |'r na_count[3,9]'
-'r dimnames(na\_count)[[2]][[10]]'|'r na_count[3,10]'
-'r dimnames(na\_count)[[2]][[11]]'|'r na_count[3,11]'
-'r dimnames(na\_count)[[2]][[12]]'|'r na_count[3,12]'
+Variables                        |NA values #
+---------------------------------|------------------
+`r dimnames(na_count)[[2]][[3]]` |`r na_count[,3]`
+`r dimnames(na_count)[[2]][[4]]` |`r na_count[,4]`
+`r dimnames(na_count)[[2]][[5]]` |`r na_count[,5]`
+`r dimnames(na_count)[[2]][[6]]` |`r na_count[,6]`
+`r dimnames(na_count)[[2]][[7]]` |`r na_count[,7]`
+`r dimnames(na_count)[[2]][[8]]` |`r na_count[,8]`
+`r dimnames(na_count)[[2]][[9]]` |`r na_count[,9]`
+`r dimnames(na_count)[[2]][[10]]`|`r na_count[,10]`
+`r dimnames(na_count)[[2]][[11]]`|`r na_count[,11]`
+`r dimnames(na_count)[[2]][[12]]`|`r na_count[,12]`
 
 #### b) Finding observations that contain missing value and process
 
@@ -223,8 +232,23 @@ total_clean$embarked[c(62, 830)] <- 'C'
 ```
 
 
-3. Grab information and create new variables
+#### 3.2 Which varialbes may be relevant to the outcome?
+##### 3.2.1 Higher Passenger class, more possible to survive?
+##### 3.2.2 Children and women first?
+##### 3.2.3 Families can help each other?
 
+```{r family_size}
+#ä¸ºä»€ä¹ˆèµ‹å€¼é¡ºåºæ¢ä¸ºsingle,small,largeï¼Œåˆ°largeæ—¶å°±ä¼šå…¨éƒ¨è¢«èµ‹å€¼ä¸ºlarge?
+family_size<-total_clean$sibsp+total_clean$parch+1
+family_size[family_size > 4]<-"large"
+family_size[family_size > 1 & family_size < 5]<-"small"
+family_size[family_size == 1]<-"single"
+total_clean<-mutate(total_clean,familysize=as.factor(family_size))
+```
+
+##### 3.2.4 Is cabin location relevant to the passenger survival?
+
+##### 3.2.5 Is there any more information we can grab from passengers name?
 Address from passenger name
 ```{r title}
 # Variable "Name" contains two types of information: 
@@ -247,82 +271,27 @@ total_clean<-mutate(total_clean,title=nametitle)
 total_clean$title<-as.factor(total_clean$title)
 ```
 
-#### Family size
-
-```{r family_size}
-#ÎªÊ²Ã´¸³ÖµË³Ðò»»Îªsingle,small,large£¬µ½largeÊ±¾Í»áÈ«²¿±»¸³ÖµÎªlarge?
-family_size<-total_clean$sibsp+total_clean$parch+1
-family_size[family_size > 4]<-"large"
-family_size[family_size > 1 & family_size < 5]<-"small"
-family_size[family_size == 1]<-"single"
-total_clean<-mutate(total_clean,familysize=as.factor(family_size))
-```
-(°ÑÐÕÌáÈ¡³öÀ´£¬ËùÓÐparch+sibsp!=0µÄ£¬Í¬Ò»¸öÐÕ¹éÎªÒ»×é£¬¼´Ò»¸ö¼ÒÍ¥£¬ÊÇ·ñÄêÁäÉÔÐ¡µÄ´æ»î¼¸ÂÊ´ó£¿)
-```{r family_group}
-fam_group <- total_clean[1:891,c("survived","name","age","sibsp","parch")]
-# grab the family name
-fam_name<-gsub(",.*\\..*","",x=fam_group$name)
-fam_group<-mutate(fam_group,fam_name=fam_name)
-# grab the family size
-fam_group<-mutate(fam_group,fam_size=parch+sibsp)
-# delete those who were on board alone
-fam_group<-fam_group[which(fam_group$fam_size!=0),]
-# group family
-fam_group<-group_by(fam_group,fam_name)
-# find the youngest one in a family
-fam_group<-mutate(fam_group,role=age-min(age))
-fam_group[which(fam_group$role!=0),"role"]<-"elder"
-fam_group[which(fam_group$role==0),"role"]<-"youngest"
-
-#yes!
-```
-
-```{r family_role}
-fam_name<-gsub(",.*\\..*","",x=total_clean$name)
-fam_group<-mutate(total_clean,fam_name=fam_name)
-fam_group<-group_by(fam_group,fam_name)
-fam_group<-mutate(fam_group,age_var=age-min(age))
-
-fam_group<-mutate(fam_group,role = c("alone"))
-fam_group[which(fam_group$parch+fam_group$sibsp!=0 && fam_group$age_var!=0),"role"]<-"elder"
-fam_group[which(fam_group$parch+fam_group$sibsp!=0 && fam_group$age_var==0),"role"]<-"youngest"
-total_clean<-mutate(total_clean,role=fam_group$role)
-```
-### Exploratory analysis & data process
 
 ### Feature selection
 features: pclass,sex,age,fare,iscabin,title,familysize
 
 ```{r split_data}
-trainset<-total_clean[1:891,c("survived","pclass","sex","age","fare","title","familysize","role")]
+# Split back into train and test sets
+trainset<-total_clean[1:891,]
 testset<-total_clean[892:1309,]
-trainset$embarked<-as.factor(trainset$embarked)
-testset$embarked<-as.factor(testset$embarked)
-
 ```
 
 ### Model selection
 ```{r model}
-
-#test
-trainset<-total_clean[1:891,]
-trainset$role<-as.factor(trainset$role)
-rf1<-randomForest(survived ~ pclass + sex + age + fare +
-                          title + familysize + role,
-                  data = trainset)
-rf2<-randomForest(survived ~ pclass + sex + age + fare +
-                          iscabin + title + familysize+
-                          sibsp+parch+embarked,
+model_rf1<-randomForest(survived ~ pclass + sex + age + fare +
+                          title + familysize,
                   data = trainset)
 ```
 
 ### Prediction
 ```{r prediction}
-rf1_result<-predict(rf1,trainset)
+rf1_result<-predict(model_rf1,trainset)
 confusionMatrix(trainset$survived,rf1_result)
-
-rf2_result<-predict(rf2,trainset)
-confusionMatrix(trainset$survived,rf2_result)
 ```
 
 
@@ -330,14 +299,13 @@ confusionMatrix(trainset$survived,rf2_result)
 ```{r predict_test_data}
 # pay attention to the type of every predictor!
 testset<-total_clean[892:1309,]
-testset$role<-as.factor(testset$role)
-levels(testset$role)<-c("alone","youngest")
 
-test6<-predict(rf1,testset)
-titanic_rf_submission6<-
+test_result<-predict(model_rf1,testset)
+titanic_rf_submission<-
         data.frame(Passengerid = testset$passengerid,
-                   Survived = test6)
-write.csv(x = titanic_rf_submission6,
+                   Survived = test_result)
+write.csv(x = titanic_rf_submission,
           file = "./titanic_rf_submission6.csv",row.names = FALSE)
 ```
 
+### Conclusions
