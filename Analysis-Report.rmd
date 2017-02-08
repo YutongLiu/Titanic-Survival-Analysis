@@ -126,14 +126,22 @@ total_clean <- total_raw
 ```
 
 #### Text Editing  
-Firstly, let's check the variable names, are they easy to use? Fortunately there is no space among the variable names. Now I just standardize them in lower case.
+After checking the variable names, fortunately there is no space among the variable names and they are almost easy to use. Now I just standardize them in lower case.
 ```{r text_edit,results = 'hide'}
 # Standardize all variable names in lower case and check
 names(total_clean) <- tolower(names(total_raw))
 colnames(total_clean)
 ```
+#### Transfer variable type
+I think variables **survived** and **sex** are actually nominal variable, although they are saved as integer.
+So here I transfer them to factor.
+```{r transfer_variable_type}
+# Change variable type
+factor_name<-c("survived","sex")
+total_clean[factor_name]<-lapply(total_clean[factor_name], function(x) as.factor(x))
+```
 
-### 3.1.2 Missing value inputation
+### 3.1.2 Missing value imputation
 #### a) Counting missing values in each variable
 ```{r counting_missing_values,results = 'hide'}
 na_count<-summary(apply(total_clean,2,is.na))
@@ -161,8 +169,6 @@ Variables                        |NA values #
 There are 263 NA values in variable **age**.
 ```{r age_imputation}
 set.seed(123)
-factor_name<-c("survived","sex")
-total_clean[factor_name]<-lapply(total_clean[factor_name], function(x) as.factor(x))
 # Age missing value imputation with rpart
 fit_age <- rpart(age ~ pclass+sex+sibsp+parch,
                data=total_clean[!is.na(total_clean$age),3:12],
@@ -288,14 +294,15 @@ model_rf1<-randomForest(survived ~ pclass + sex + age + fare +
                   data = trainset)
 ```
 
-### Prediction
+### Prediction with trainset
 ```{r prediction}
 rf1_result<-predict(model_rf1,trainset)
 confusionMatrix(trainset$survived,rf1_result)
+importance(model_rf1)
 ```
 
 
-### Predict with test data
+### Prediction with testset
 ```{r predict_test_data}
 # pay attention to the type of every predictor!
 testset<-total_clean[892:1309,]
