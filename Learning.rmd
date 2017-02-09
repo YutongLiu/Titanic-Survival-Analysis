@@ -7,6 +7,29 @@ Set display option, set "message = FALSE"(default is TRUE), __NOT__ "warning = F
 ### 2 How to use inline code?
 It's **`** **NOT** **'** !!!  
      For example `r 4+2`, NOT 'r 4+2'
-   
+     
 ### 3 About creating a table in a report
 The length of **-** should not be less than the longest text! Otherwise the display isn't good.
+
+
+## About using R
+### 1 Regular Expression
+When I was observing the dataset, I found that there are some personal information in **name** variable, e.g. title, family name. So I wanted to grab the title information first using regular expression. 
+My idea was "grabing the part I want", original codes are like that:  
+
+    position_length<-regexpr(",(.*)[.]",trainset_clean$name)
+    nametitle<-regmatches(x=trainset_clean$name,m=position_length)
+    nametitle<-gsub(" ","",nametitle)
+    nametitle<-gsub(",","",nametitle)
+    nametitle<-gsub("[.]","",nametitle)
+   
+After finishing my "project", I began to read articles published in kaggle and I found that some other guys also grab passengers' title from **name**, but they use less code than me, for example(here is the [link](https://www.kaggle.com/mrisdal/titanic/exploring-survival-on-the-titanic):  
+
+    nametitle<-gsub("(.*, )|(\\..*)","",x=total_clean$name)
+
+Only one line! And fortunately I got the idea behind it: **grab the part I want = delete the part I don't want** :)
+With this learning, I got the family name of passengers:
+
+    fam_name<-gsub(",.*\\..*","",x=fam_group$name)
+    
+(I used it as one of the elements to judge the passenger familes, supposed family member helped each other and got higher chance to survive than those were alone, although this feature didn't work good when predicting the survival...)
