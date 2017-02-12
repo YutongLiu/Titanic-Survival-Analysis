@@ -165,7 +165,7 @@ Variables                        |NA values #
 
 #### b) Finding observations that contain missing value and process
 
-##### Age
+##### 1 Age
 There are 263 NA values in variable **age**.
 ```{r age_imputation}
 set.seed(123)
@@ -190,7 +190,7 @@ total_clean$age<-imp_age$age
 sum(is.na(total_clean$age))
 ```
 
-##### Fare
+##### 2 Fare
 After checking the observation with NA in fare, we find that this passenger is third class and embarked from Southampton. Based on the distribution of third class ticket fare from Southampton, we use the median to impute the NA value.
 ```{r fare_imputation}
 # Check the observation with NA in fare
@@ -204,47 +204,39 @@ total_clean[is.na(total_clean$fare),"fare"]<-
         median(total_clean[total_clean$pclass=="3"&total_clean$embarked =="S",]$fare,na.rm = TRUE)
 ```
 
-##### Cabin
-It seems that the number of cabin is not related to passenger survival
-so if the cabin is missing value, we think the passenger didn't have a cabin
-and we change this variable to a logical vector
-```{r cabin_missing_value}
-#missing value in cabin
-total_clean<-mutate(total_clean,iscabin=is.na(cabin))
-total_clean$iscabin<-factor(total_clean$iscabin,levels=c(TRUE,FALSE),
-                               labels=c("no","yes"))
-cabin <- total_clean$cabin
-cabin_cap<-gsub("[0-9]","",cabin)
-unique(cabin_cap)
-cabin_cap<-as.factor(cabin_cap)
-cabin_level<-c("C","E","G","D","A","C","B","F","F","D","B","E","C","B","T","B","E")
-levels(cabin_cap)<-cabin_level
-total_clean$cabin<-cabin_cap
-
-cabin_survived <-  total_clean[1:891,]
-g_cabin <- ggplot(data = cabin_survived[!is.na(cabin_survived$cabin),],
-                aes(cabin,fill=survived))
-g_cabin+geom_bar()
-# fare vs cabin boxplot
-g_cab_fare <- ggplot(data = cabin_survived[!is.na(cabin_survived$cabin),],
-                aes(x=cabin,y=fare))
-g_cab_fare+geom_boxplot()
-```
-
-
-##### Embarked
+##### 3 Embarked
+Two observations with missing value in embarked have the same ticket fare: 80
+From the plot, this fare appears more likely among passengers emarked from Cherbourg. So these two observations embarked missing value are assigned to 'C'.
 ```{r embarked}
+# Find the missing value in which observation
+total_clean[where(is.na(total_clean$embarked)==TRUE),]
+# Fare vs Embarked
+gfare <- ggplot(total_clean,aes(x=embarked,y=fare))
+gfare+geom_boxplot()
+
 total_clean$embarked[c(62, 830)] <- 'C'
 ```
 
-
 #### 3.2 Which varialbes may be relevant to the outcome?
 ##### 3.2.1 Higher Passenger class, more possible to survive?
+From the barchart, it seems that higher passenger class is, more possible to survive.
+
+```{r pclass_survival}
+gpclass<-ggplot(total_clean[1:891,],aes(pclass,fill = survived))
+gpclass+geom_bar()
+```
 ##### 3.2.2 Children and women first?
+Obviously female passengers are more likely to survive.
+```{r gender_age_survive}
+ggender<-ggplot(total_clean[1:891,],aes(sex,fill = survived))
+ggender+geom_bar()
+
+gage <- ggplot(total_clean[1:891,],aes(age,,fill = survived))
+gage+geom_area(stat = "bin")
+```
 ##### 3.2.3 Families can help each other?
 
 ```{r family_size}
-#为什么赋值顺序换为single,small,large，到large时就会全部被赋值为large?
 family_size<-total_clean$sibsp+total_clean$parch+1
 family_size[family_size > 4]<-"large"
 family_size[family_size > 1 & family_size < 5]<-"small"
@@ -253,6 +245,29 @@ total_clean<-mutate(total_clean,familysize=as.factor(family_size))
 ```
 
 ##### 3.2.4 Is cabin location relevant to the passenger survival?
+I found some information on the internet, it indicates that the initials in cabin number depends on cabin location, class and price. So I tried to grab the initials of cabin.
+```{r cabin_capital}
+cabin_survived <-  total_clean[1:891,c("survived","cabin")]
+
+# Grab the beginning letter in cabin number
+cabin_survived$cabib<-gsub("[0-9]","",cabin_survived$cabib)
+
+# Coerce into a factor vector
+unique(cabin_survived$cabib)
+cabin_survived$cabib<-as.factor(cabin_survived$cabib)
+
+# Combine factor levels(there are some observation with multiple letter in cabin, like 'B20 B10 B3'
+cabin_level<-c("C","E","G","D","A","C","B","F","F","D","B","E","C","B","T","B","E")
+levels(cabin_survived$cabib)<-cabin_level
+```
+
+From this plot, we can see that almost all passengers with cabin information have a high possibility to survive. But there are too many missing value(about 77%) in cabin, and especially we don't know the reason why there are missing value, e.g. they were just not recorded by mistake, so this variable won't be used as a feature in prediction.
+```{r cabin}
+# Cabin vs survival 
+g_cabin <- ggplot(data = cabin_survived[!is.na(cabin_survived$cabin),],
+                aes(cabin,fill=survived))
+g_cabin+geom_bar()
+```
 
 ##### 3.2.5 Is there any more information we can grab from passengers name?
 Address from passenger name
