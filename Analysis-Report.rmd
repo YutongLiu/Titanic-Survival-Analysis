@@ -105,7 +105,7 @@ embarked|Port of Embarkation(C = Cherbourg; Q = Queenstown; S = Southampton)
 
    + 2.1 What is the outcome we want?
 Clearly it is important to set the target of data analysis before anything gets start.
-We want to predict the survival of Titanic passengers. In the dataset, **pclass** is the outcome we will predict in testset.  
+We want to predict the survival of Titanic passengers. In the dataset, **survival** is the outcome we will predict in testset.  
 
    + 2.2 What data can we use to answer the question?
 There are 10 variables, two of them, **age** and **sex**, are demographic information, there is also passengers' name. I think another 7 varibales can be categorized to information about their trip: **embarked**, where did they get on the boat; **sibsp** and **parch**, were they alone or accompanied; **pclass**, which class are they, etc.
@@ -331,3 +331,5 @@ write.csv(x = titanic_rf_submission,
 ```
 
 ### Conclusions
+In this project, I tried lots of ways to process dataset and I got a max categorization accuracy about 0.79.
+What surprises me is that the most important factors that impact survival status is passenger title, gender and ticket fare, passenger age is not included.
