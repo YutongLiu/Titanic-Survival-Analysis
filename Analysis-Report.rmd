@@ -294,7 +294,7 @@ total_clean$title<-as.factor(total_clean$title)
 
 
 ### Feature selection
-features: pclass,sex,age,fare,iscabin,title,familysize
+features: pclass,sex,age,fare,title,familysize
 
 ```{r split_data}
 # Split back into train and test sets
