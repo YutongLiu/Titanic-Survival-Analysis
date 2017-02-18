@@ -159,6 +159,7 @@ Variables                        |NA values #
 
 ##### 1 Age
 There are 263 NA values in variable **age**.
+There is a peak in the age of about 20 but I think the shape of age distribution approximate to the previous one.
 ```{r age_imputation}
 set.seed(123)
 factor_name<-c("survived","sex")
@@ -236,7 +237,7 @@ gage_interval <- ggplot(total_clean[1:891,],aes(cut(age,10),fill = survived))
 gage_interval + geom_bar() + labs(title = "Age vs Survival", x = "Passenger age interval", y = "Count")
 
 # Survival Proportion of each age group
-age_survival <- table(cut(total_clean[1:891,'age'],10),total_clean[1:891,'survived'])
+age_survival <- table(cut(head(total_clean$age,891),10),head(total_clean$survived,891))
 age_survival[1:10,2]/apply(age_survival,1,sum)
 ```
 
@@ -352,6 +353,6 @@ write.csv(x = titanic_rf_submission,
 ```
 
 ### Conclusions
-Actually I iterated this project for many time, thought about the case, tried to find out the factor that impacts the survival status, did data exploration, processed variables in a different way(e.g. missing value imputation), changed features to train the prediction model. The greatest score I got was about 0.79. I really enjoyed the process.
-From this project, what surprises me is that **title** is the most important feature, not passenger class or gender.
+Actually I iterated this project for many time, thought about the case, tried to find out the factor that impacts the survival status, did data exploration, processed variables in a different way(e.g. missing value imputation), changed features to train the prediction model. The greatest score I got was about 0.79. I really enjoyed the process.  
+From this project, what surprises me is that **title** is the most important feature, not passenger class or gender.  
 I think there are other ways to improve the prediction accuracy, any comment and advice is welcome :) 
