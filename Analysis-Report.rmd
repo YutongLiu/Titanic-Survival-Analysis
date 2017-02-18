@@ -105,7 +105,7 @@ embarked|Port of Embarkation(C = Cherbourg; Q = Queenstown; S = Southampton)
 
    + 2.1 What is the outcome we want?
 Clearly it is important to set the target of data analysis before anything gets start.
-We want to predict the survival of Titanic passengers. In the dataset, **survival** is the outcome we will predict in testset.  
+We want to predict the survival of Titanic passengers. In the dataset, **pclass** is the outcome we will predict in testset.  
 
    + 2.2 What data can we use to answer the question?
 There are 10 variables, two of them, **age** and **sex**, are demographic information, there is also passengers' name. I think another 7 varibales can be categorized to information about their trip: **embarked**, where did they get on the boat; **sibsp** and **parch**, were they alone or accompanied; **pclass**, which class are they, etc.
@@ -126,22 +126,14 @@ total_clean <- total_raw
 ```
 
 #### Text Editing  
-After checking the variable names, fortunately there is no space among the variable names and they are almost easy to use. Now I just standardize them in lower case.
+Firstly, let's check the variable names, are they easy to use? Fortunately there is no space among the variable names. Now I just standardize them in lower case.
 ```{r text_edit,results = 'hide'}
 # Standardize all variable names in lower case and check
 names(total_clean) <- tolower(names(total_raw))
 colnames(total_clean)
 ```
-#### Transfer variable type
-I think variables **survived** and **sex** are actually nominal variable, although they are saved as integer.
-So here I transfer them to factor.
-```{r transfer_variable_type}
-# Change variable type
-factor_name<-c("survived","sex")
-total_clean[factor_name]<-lapply(total_clean[factor_name], function(x) as.factor(x))
-```
 
-### 3.1.2 Missing value imputation
+### 3.1.2 Missing value inputation
 #### a) Counting missing values in each variable
 ```{r counting_missing_values,results = 'hide'}
 na_count<-summary(apply(total_clean,2,is.na))
@@ -169,6 +161,8 @@ Variables                        |NA values #
 There are 263 NA values in variable **age**.
 ```{r age_imputation}
 set.seed(123)
+factor_name<-c("survived","sex")
+total_clean[factor_name]<-lapply(total_clean[factor_name], function(x) as.factor(x))
 # Age missing value imputation with rpart
 fit_age <- rpart(age ~ pclass+sex+sibsp+parch,
                data=total_clean[!is.na(total_clean$age),3:12],
@@ -209,9 +203,9 @@ Two observations with missing value in embarked have the same ticket fare: 80
 From the plot, this fare appears more likely among passengers emarked from Cherbourg. So these two observations embarked missing value are assigned to 'C'.
 ```{r embarked}
 # Find the missing value in which observation
-total_clean[where(is.na(total_clean$embarked)==TRUE),]
+total_clean[is.na(total_clean$embarked),]
 # Fare vs Embarked
-gfare <- ggplot(total_clean,aes(x=embarked,y=fare))
+gfare <- ggplot(total_clean[total_clean$pclass==1,],aes(x=embarked,y=fare))
 gfare+geom_boxplot()
 
 total_clean$embarked[c(62, 830)] <- 'C'
@@ -227,38 +221,64 @@ gpclass+geom_bar()
 ```
 ##### 3.2.2 Children and women first?
 Obviously female passengers are more likely to survive.
-```{r gender_age_survive}
+```{r gender_survive}
 ggender<-ggplot(total_clean[1:891,],aes(sex,fill = survived))
 ggender+geom_bar()
-
-gage <- ggplot(total_clean[1:891,],aes(age,,fill = survived))
-gage+geom_area(stat = "bin")
 ```
-##### 3.2.3 Families can help each other?
 
+At first I drew an area plot to find insights but the plot was not easy to read.  
+So I divide variable **age** into several intervals, plot it with survival status and calculate the proportion of survival in each age group. It seems clear that child is more possible to survive.
+```{r age_survive}
+#gage <- ggplot(total_clean[1:891,],aes(age,fill = survived))
+#gage+geom_area(stat = "bin")
+
+gage_interval <- ggplot(total_clean[1:891,],aes(cut(age,10),fill = survived))
+gage_interval + geom_bar() + labs(title = "Age vs Survival", x = "Passenger age interval", y = "Count")
+
+# Survival Proportion of each age group
+age_survival <- table(cut(total_clean[1:891,'age'],10),total_clean[1:891,'survived'])
+age_survival[1:10,2]/apply(age_survival,1,sum)
+```
+
+From the table, I found that there is a little peak in 32-40 age group. Maybe because young child couldn't leave alone so they were accompanied by their mother and most of these 32~40-year-old passengers are children mother. From the plot below, it seems like what I thought, this group of female passengers are more possible to survive than the male group in the same age and also other age group of women :)
+```{r children_mother}
+gage_interval + geom_bar()+facet_grid(.~sex)+
+        labs(title = "Age vs Survival", x = "Passenger age interval", y = "Count")
+total_clean<-mutate(total_clean,agegroup=cut(age,10))
+```
+
+##### 3.2.3 Families can help each other?
+We assume that **parch+sibsp** means the family size of passengers and family can help each other during disaster.  
+From the plot, we can see that passengers who traveled with family were more possible to survive, however it works well just for family size 1-3.
 ```{r family_size}
-family_size<-total_clean$sibsp+total_clean$parch+1
-family_size[family_size > 4]<-"large"
-family_size[family_size > 1 & family_size < 5]<-"small"
-family_size[family_size == 1]<-"single"
+# Create a new feature called familynumber
+family_size<-total_clean$sibsp+total_clean$parch
+total_clean<-mutate(total_clean,familynumber=family_size)
+
+gfamily<-ggplot(total_clean[1:891,],aes(familynumber,fill=survived))
+gfamily+geom_bar()
+
+family_size[family_size > 3]<-"large"
+family_size[family_size > 0 & family_size < 4]<-"small"
+family_size[family_size == 0]<-"single"
 total_clean<-mutate(total_clean,familysize=as.factor(family_size))
 ```
 
-##### 3.2.4 Is cabin location relevant to the passenger survival?
+##### 3.2.4 Is cabin location relevant to the passenger survival?  
 I found some information on the internet, it indicates that the initials in cabin number depends on cabin location, class and price. So I tried to grab the initials of cabin.
 ```{r cabin_capital}
 cabin_survived <-  total_clean[1:891,c("survived","cabin")]
 
 # Grab the beginning letter in cabin number
-cabin_survived$cabib<-gsub("[0-9]","",cabin_survived$cabib)
+cabin_survived$cabin<-gsub("[0-9]","",cabin_survived$cabin)
 
 # Coerce into a factor vector
-unique(cabin_survived$cabib)
-cabin_survived$cabib<-as.factor(cabin_survived$cabib)
+unique(cabin_survived$cabin)
+cabin_survived$cabin<-as.factor(cabin_survived$cabin)
 
 # Combine factor levels(there are some observation with multiple letter in cabin, like 'B20 B10 B3'
 cabin_level<-c("C","E","G","D","A","C","B","F","F","D","B","E","C","B","T","B","E")
-levels(cabin_survived$cabib)<-cabin_level
+levels(cabin_survived$cabin)<-cabin_level
 ```
 
 From this plot, we can see that almost all passengers with cabin information have a high possibility to survive. But there are too many missing value(about 77%) in cabin, and especially we don't know the reason why there are missing value, e.g. they were just not recorded by mistake, so this variable won't be used as a feature in prediction.
@@ -270,7 +290,8 @@ g_cabin+geom_bar()
 ```
 
 ##### 3.2.5 Is there any more information we can grab from passengers name?
-Address from passenger name
+After observing the name variable, I grab the title from passenger name.  
+Those people with special title had more possiblities to survive.
 ```{r title}
 # Variable "Name" contains two types of information: 
 # name and also sex&marital status
@@ -292,32 +313,32 @@ total_clean<-mutate(total_clean,title=nametitle)
 total_clean$title<-as.factor(total_clean$title)
 ```
 
-
-### Feature selection
-features: pclass,sex,age,fare,title,familysize
-
+### Feature & Model selection 
+Based on exploratory analysis, pclass, sex, age, fare, title and familysize are selected to train model.
+For this classification question, I train the model using random forest.
 ```{r split_data}
 # Split back into train and test sets
 trainset<-total_clean[1:891,]
 testset<-total_clean[892:1309,]
 ```
 
-### Model selection
 ```{r model}
 model_rf1<-randomForest(survived ~ pclass + sex + age + fare +
                           title + familysize,
                   data = trainset)
 ```
 
-### Prediction with trainset
+### Evaluation
+In sample error, accuracy 0.89, and title, sex, fare and age are top 4 important variables.
 ```{r prediction}
 rf1_result<-predict(model_rf1,trainset)
 confusionMatrix(trainset$survived,rf1_result)
+
 importance(model_rf1)
 ```
 
 
-### Prediction with testset
+### Predict with test data
 ```{r predict_test_data}
 # pay attention to the type of every predictor!
 testset<-total_clean[892:1309,]
@@ -327,9 +348,10 @@ titanic_rf_submission<-
         data.frame(Passengerid = testset$passengerid,
                    Survived = test_result)
 write.csv(x = titanic_rf_submission,
-          file = "./titanic_rf_submission6.csv",row.names = FALSE)
+          file = "./titanic_rf_submission7.csv",row.names = FALSE)
 ```
 
 ### Conclusions
-In this project, I tried lots of ways to process dataset and I got a max categorization accuracy about 0.79.
-What surprises me is that the most important factors that impact survival status is passenger title, gender and ticket fare, passenger age is not included.
+Actually I iterated this project for many time, thought about the case, tried to find out the factor that impacts the survival status, did data exploration, processed variables in a different way(e.g. missing value imputation), changed features to train the prediction model. The greatest score I got was about 0.79. I really enjoyed the process.
+From this project, what surprises me is that **title** is the most important feature, not passenger class or gender.
+I think there are other ways to improve the prediction accuracy, any comment and advice is welcome :) 
