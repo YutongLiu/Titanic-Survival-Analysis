@@ -238,7 +238,7 @@ gage_interval + geom_bar() + labs(title = "Age vs Survival", x = "Passenger age 
 
 # Survival Proportion of each age group
 age_survival <- table(cut(head(total_clean$age,891),10),head(total_clean$survived,891))
-age_survival[1:10,2]/apply(age_survival,1,sum)
+age_survival <- addmargins(prop.table(age_survival,1),2)
 ```
 
 From the table, I found that there is a little peak in 32-40 age group. Maybe because young child couldn't leave alone so they were accompanied by their mother and most of these 32~40-year-old passengers are children mother. From the plot below, it seems like what I thought, this group of female passengers are more possible to survive than the male group in the same age and also other age group of women :)
